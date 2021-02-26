@@ -20,8 +20,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mudler/luet-geniso/pkg/burner"
+	"github.com/mudler/luet-geniso/pkg/schema"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/twpayne/go-vfs"
 )
 
 const (
@@ -73,6 +76,13 @@ var rootCmd = &cobra.Command{
 			log.Error("One argument (spec) required")
 			os.Exit(1)
 		}
+		for _, a := range args {
+			spec, err := schema.LoadFromFile(a, vfs.OSFS)
+			checkErr(err)
+
+			checkErr(burner.Burn(spec, vfs.OSFS))
+		}
+
 		//	fs := vfs.OSFS
 		//stage, _ := cmd.Flags().GetString("stage")
 		//exec, _ := cmd.Flags().GetString("executor")

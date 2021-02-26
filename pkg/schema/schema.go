@@ -1,9 +1,7 @@
 package schema
 
 import (
-	"bytes"
-	"io"
-	"net/http"
+	"time"
 
 	"github.com/twpayne/go-vfs"
 	"gopkg.in/yaml.v2"
@@ -15,9 +13,10 @@ type SystemSpec struct {
 	Packages    Packages   `yaml:"packages"`
 	Luet        Luet       `yaml:"luet"`
 	Repository  Repository `yaml:"repository"`
-	Overlay     bool       `yaml:"overlay"`
 	ImagePrefix string     `yaml:"image_prefix"`
 	Date        bool       `yaml:"image_date"`
+	ImageName   string     `yaml:"image_name"`
+	Arch        string     `yaml:"arch"`
 }
 
 type Luet struct {
@@ -41,6 +40,24 @@ type Initramfs struct {
 	RootfsFile string `yaml:"rootfs_file"`
 }
 
+func (s *SystemSpec) ISOName() (imageName string) {
+	if s.ImageName != "" {
+		imageName = s.ImageName
+	}
+	if s.ImagePrefix != "" {
+		imageName = s.ImagePrefix + imageName
+	}
+	if s.Date {
+		currentTime := time.Now()
+		imageName = imageName + currentTime.Format("20060102")
+	}
+	if imageName == "" {
+		imageName = "dev"
+	}
+	imageName = imageName + ".iso"
+	return
+}
+
 // LoadFromFile loads a yip config from a YAML file
 func LoadFromFile(s string, fs vfs.FS) (*SystemSpec, error) {
 	yamlFile, err := fs.ReadFile(s)
@@ -51,7 +68,7 @@ func LoadFromFile(s string, fs vfs.FS) (*SystemSpec, error) {
 	return LoadFromYaml(yamlFile)
 }
 
-// LoadFromYaml loads a yip config from bytes
+// LoadFromYaml loads a config from bytes
 func LoadFromYaml(b []byte) (*SystemSpec, error) {
 
 	var yamlConfig SystemSpec
@@ -61,18 +78,4 @@ func LoadFromYaml(b []byte) (*SystemSpec, error) {
 	}
 
 	return &yamlConfig, nil
-}
-
-// LoadFromUrl loads a yip config from a url
-func LoadFromUrl(s string) (*SystemSpec, error) {
-	resp, err := http.Get(s)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	buf := bytes.NewBuffer([]byte{})
-	_, err = io.Copy(buf, resp.Body)
-
-	return LoadFromYaml(buf.Bytes())
 }

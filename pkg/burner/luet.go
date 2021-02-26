@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/mudler/luet-geniso/pkg/schema"
+	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
 
@@ -19,6 +19,7 @@ func run(cmd string, opts ...func(cmd *exec.Cmd)) (string, error) {
 	for _, o := range opts {
 		o(c)
 	}
+	c.Env = []string{"LUET_NOLOCK=true", "LUET_YES=true"}
 	out, err := c.CombinedOutput()
 	if err != nil {
 		return string(out), fmt.Errorf("failed to run %s: %v", cmd, err)

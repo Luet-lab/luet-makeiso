@@ -15,7 +15,7 @@
 
 package main
 
-import "github.com/mudler/luet-geniso/cmd"
+import "github.com/mudler/luet-makeiso/cmd"
 
 func main() {
 	cmd.Execute()

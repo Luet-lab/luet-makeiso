@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mudler/luet-geniso/pkg/utils"
+	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/twpayne/go-vfs"
 

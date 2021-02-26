@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mudler/luet-geniso/pkg/schema"
+	"github.com/mudler/luet-makeiso/pkg/schema"
 	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
@@ -36,8 +36,7 @@ func copyConfig(config, rootfsWanted string, fs vfs.FS, s *schema.SystemSpec) er
 	if err != nil {
 		return err
 	}
-	// XXX: This is temporarly needed until we fix override from CLI of --system-target
-	//     and the --system-dbpath options
+	// XXX: This is temporarly needed until https://github.com/mudler/luet/issues/186 is closed
 	input = []byte(string(input) + "\n" +
 		`
 system:

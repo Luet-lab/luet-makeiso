@@ -8,7 +8,7 @@ import (
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
-	"github.com/mudler/luet-geniso/pkg/utils"
+	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"

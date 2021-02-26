@@ -9,8 +9,8 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/kyokomi/emoji/v2"
-	"github.com/mudler/luet-geniso/pkg/schema"
-	"github.com/mudler/luet-geniso/pkg/utils"
+	"github.com/mudler/luet-makeiso/pkg/schema"
+	"github.com/mudler/luet-makeiso/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
@@ -29,10 +29,6 @@ func info(a ...interface{}) {
 }
 
 func Burn(s *schema.SystemSpec, fs vfs.FS) error {
-
-	sp := spinner.New(spinner.CharSets[9], 100*time.Millisecond) // Build our new spinner
-	sp.Start()                                                   // Start the spinner
-	defer sp.Stop()
 
 	dir, err := ioutil.TempDir("", "luet-geniso")
 	if err != nil {
@@ -58,6 +54,10 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {
 		return err
 	}
+
+	sp := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	sp.Start()
+	defer sp.Stop()
 
 	info(":superhero: Installing EFI packages")
 	if err := LuetInstall(tempUEFI, s.Packages.UEFI, s.Repository.Packages, false, fs, s); err != nil {

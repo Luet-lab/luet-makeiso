@@ -2,6 +2,7 @@ package burner
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mudler/luet-geniso/pkg/utils"
 	"github.com/pkg/errors"
@@ -61,7 +62,7 @@ func nativeSquashfs(diskImage, label, source string, f vfs.FS) error {
 	var diskSize int64 = size // 10 MB
 	mydisk, err := diskfs.Create(diskImg, diskSize, diskfs.Raw)
 	if err != nil {
-		return errors.Wrapf(err, "while creating disk")
+		return errors.Wrapf(err, "while creating squashfs disk")
 	}
 
 	mydisk.LogicalBlocksize = 4096
@@ -84,6 +85,9 @@ func nativeSquashfs(diskImage, label, source string, f vfs.FS) error {
 }
 
 func CreateSquashfs(diskImage, label, source string, f vfs.FS) error {
+	if os.Getenv(("NATIVE")) == "true" {
+		return nativeSquashfs(diskImage, label, source, f)
+	}
 	_, err := run(fmt.Sprintf("mksquashfs %s %s -b 1024k -comp xz -Xbcj x86", source, diskImage))
 	//log.Info(l)
 	return err

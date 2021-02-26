@@ -8,7 +8,7 @@ Golang extension to build ISOs with Luet
 
 This tool generates ISO reading specfiles in the following syntax:
 
-```
+```yaml
 packages:
   # Packages to be installed in the rootfs
   rootfs:
@@ -93,4 +93,24 @@ Path to the luet config to use to install the packages from
 
 ## Build
 
-Run `go build` or `make build` from the checkout
+Run `go build` or `make build` from the checkout.
+
+## Install
+
+Download the binary from [the releases](https://github.com/mudler/luet-makeiso/releases) if you haven't compiled locally.
+
+Otherwise it's available in the `luet-official` repo, you can install it with:
+
+```bash
+$> luet install extensions/makeiso
+```
+
+You don't need anything special than running the binary with the specfile as argument:
+
+```bash
+
+$> luet-makeiso myspec.yaml
+
+```
+
+Note: It respects `TMPDIR` for setting up temporary folders

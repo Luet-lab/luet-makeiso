@@ -102,7 +102,7 @@ Download the binary from [the releases](https://github.com/mudler/luet-makeiso/r
 Otherwise it's available in the `luet-official` repo, you can install it with:
 
 ```bash
-$> luet install extensions/makeiso
+$> luet install extension/makeiso
 ```
 
 You don't need anything special than running the binary with the specfile as argument:

@@ -51,7 +51,7 @@ func init() {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:     "luet-geniso",
+	Use:     "luet-makeiso",
 	Short:   "generate iso files with luet",
 	Version: fmt.Sprintf("%s-g%s %s", CLIVersion, BuildCommit, BuildTime),
 	Long: `It reads iso spec to generate ISO files from luet repositories or trees.
@@ -67,14 +67,6 @@ var rootCmd = &cobra.Command{
 
 			checkErr(burner.Burn(spec, vfs.OSFS))
 		}
-
-		//	fs := vfs.OSFS
-		//stage, _ := cmd.Flags().GetString("stage")
-		//exec, _ := cmd.Flags().GetString("executor")
-		//runner := executor.NewExecutor(exec)
-		//fromStdin := len(args) == 1 && args[0] == "-"
-
-		//checkErr(runner.Run(stage, vfs.OSFS, stdConsole, args...))
 	},
 }
 

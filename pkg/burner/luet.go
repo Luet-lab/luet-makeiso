@@ -56,9 +56,9 @@ repos_confdir:
 
 func LuetInstall(rootfs string, packages []string, repositories []string, keepDB bool, fs vfs.FS, spec *schema.SystemSpec) error {
 
-	for _, d := range []string{"/dev", "/sys", "/proc", "/tmp", "/dev/pt", "/run", "/var/lock", "/luetdb"} {
-		fs.Mkdir(d, os.ModePerm)
-	}
+	// for _, d := range []string{"/dev", "/sys", "/proc", "/tmp", "/dev/pt", "/run", "/var/lock", "/luetdb"} {
+	// 	fs.Mkdir(d, os.ModePerm)
+	// }
 	cfgFile := filepath.Join(rootfs, "luet.yaml")
 	cfgRaw, _ := fs.RawPath(cfgFile)
 

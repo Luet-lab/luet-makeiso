@@ -3,29 +3,12 @@ package burner
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/mudler/luet-makeiso/pkg/schema"
-	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
-
-func run(cmd string, opts ...func(cmd *exec.Cmd)) (string, error) {
-	log.Debugf("running command `%s`", cmd)
-	c := exec.Command("sh", "-c", cmd)
-	for _, o := range opts {
-		o(c)
-	}
-	c.Env = []string{"LUET_NOLOCK=true", "LUET_YES=true"}
-	out, err := c.CombinedOutput()
-	if err != nil {
-		return string(out), fmt.Errorf("failed to run %s: %v", cmd, err)
-	}
-
-	return string(out), err
-}
 
 func copyConfig(config, rootfsWanted string, fs vfs.FS, s *schema.SystemSpec) error {
 	//	cfg, _ := fs.RawPath(s.Luet.Config)
@@ -66,24 +49,18 @@ func LuetInstall(rootfs string, packages []string, repositories []string, keepDB
 	}
 
 	if len(repositories) > 0 {
-		out, err := run(fmt.Sprintf("luet install --config %s %s", cfgRaw, strings.Join(repositories, " ")))
-		log.Info(out)
-		if err != nil {
+		if err := run(fmt.Sprintf("luet install --no-spinner --config %s %s", cfgRaw, strings.Join(repositories, " "))); err != nil {
 			return err
 		}
 	}
 
 	if len(packages) > 0 {
-		out, err := run(fmt.Sprintf("luet install --config %s %s", cfgRaw, strings.Join(packages, " ")))
-		log.Info(out)
-		if err != nil {
+		if err := run(fmt.Sprintf("luet install --no-spinner --config %s %s", cfgRaw, strings.Join(packages, " "))); err != nil {
 			return err
 		}
 	}
 
-	out, err := run(fmt.Sprintf("luet --config %s cleanup", cfgRaw))
-	log.Info(out)
-	if err != nil {
+	if err := run(fmt.Sprintf("luet --config %s cleanup", cfgRaw)); err != nil {
 		return err
 	}
 

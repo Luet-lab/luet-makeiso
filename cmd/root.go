@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	CLIVersion = "0.2.2"
+	CLIVersion = "0.2.3"
 )
 
 // Build time and commit information.
@@ -63,7 +63,7 @@ var rootCmd = &cobra.Command{
 
 		localPath, _ := cmd.Flags().GetString("local")
 
-		if !filepath.IsAbs(localPath) {
+		if localPath != "" && !filepath.IsAbs(localPath) {
 			var err error
 			localPath, err = filepath.Abs(localPath)
 			checkErr(err)
@@ -76,7 +76,6 @@ var rootCmd = &cobra.Command{
 			if localPath != "" {
 				spec.Luet.Repositories = append(spec.Luet.Repositories, schema.NewLocalRepo("local", localPath))
 			}
-
 			checkErr(burner.Burn(spec, vfs.OSFS))
 		}
 	},

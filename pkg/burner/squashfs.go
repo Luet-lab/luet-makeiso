@@ -88,7 +88,5 @@ func CreateSquashfs(diskImage, label, source string, f vfs.FS) error {
 	if os.Getenv(("NATIVE")) == "true" {
 		return nativeSquashfs(diskImage, label, source, f)
 	}
-	_, err := run(fmt.Sprintf("mksquashfs %s %s -b 1024k -comp xz -Xbcj x86", source, diskImage))
-	//log.Info(l)
-	return err
+	return run(fmt.Sprintf("mksquashfs %s %s -b 1024k -comp xz -Xbcj x86", source, diskImage))
 }

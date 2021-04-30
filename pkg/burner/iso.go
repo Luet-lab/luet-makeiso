@@ -21,7 +21,7 @@ func GenISO(diskImage, label, source string, f vfs.FS) error {
 		return nativeGenISO(diskImage, label, source, f)
 	}
 
-	_, err := run(fmt.Sprintf(
+	if err := run(fmt.Sprintf(
 		`xorriso -as mkisofs \
 		    -volid "%s" \
 		    -isohybrid-mbr %s/boot/syslinux/isohdpfx.bin \
@@ -35,8 +35,7 @@ func GenISO(diskImage, label, source string, f vfs.FS) error {
 		      -no-emul-boot \
 		      -isohybrid-gpt-basdat \
 		    -o "%s" \
-		  %s`, label, source, diskImage, source))
-	if err != nil {
+		  %s`, label, source, diskImage, source)); err != nil {
 		info(err)
 		return err
 	}

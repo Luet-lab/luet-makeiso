@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mudler/luet-makeiso/pkg/burner"
@@ -61,9 +62,28 @@ var rootCmd = &cobra.Command{
 			log.Error("One argument (spec) required")
 			os.Exit(1)
 		}
+
+		onlyLocal, _ := cmd.Flags().GetBool("only-local")
+		localPath, _ := cmd.Flags().GetString("local")
+		if onlyLocal && localPath == "" {
+			log.Fatal("--only-local provided, but no --local repository supplied")
+		}
+		if !filepath.IsAbs(localPath) {
+			var err error
+			localPath, err = filepath.Abs(localPath)
+			checkErr(err)
+		}
+
 		for _, a := range args {
 			spec, err := schema.LoadFromFile(a, vfs.OSFS)
 			checkErr(err)
+
+			if onlyLocal {
+				spec.Luet.Repositories = schema.Repositories{schema.NewLocalRepo("local", localPath)}
+			} else if localPath != "" {
+				spec.Luet.Repositories = append(spec.Luet.Repositories, schema.NewLocalRepo("local", localPath))
+			}
+			fmt.Println(spec.Luet.Repositories.Marshal())
 
 			checkErr(burner.Burn(spec, vfs.OSFS))
 		}
@@ -78,6 +98,9 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.Flags().BoolP("only-local", "o", false, "Use only the local provided repository")
+	rootCmd.Flags().StringP("local", "l", "", "Repository to add")
+
 	//rootCmd.PersistentFlags().StringP("spec", "e", "default", "Executor which applies the config")
 	//rootCmd.PersistentFlags().StringP("spec", "s", "", "Specfile")
 }

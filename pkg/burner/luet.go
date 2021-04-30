@@ -2,7 +2,6 @@ package burner
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,15 +28,19 @@ func run(cmd string, opts ...func(cmd *exec.Cmd)) (string, error) {
 }
 
 func copyConfig(config, rootfsWanted string, fs vfs.FS, s *schema.SystemSpec) error {
-	cfg, _ := fs.RawPath(s.Luet.Config)
-	rootfs, _ := fs.RawPath(rootfsWanted)
-
-	input, err := ioutil.ReadFile(cfg)
+	//	cfg, _ := fs.RawPath(s.Luet.Config)
+	repos, err := s.Luet.Repositories.Marshal()
 	if err != nil {
 		return err
 	}
+	rootfs, _ := fs.RawPath(rootfsWanted)
+
+	// input, err := ioutil.ReadFile(cfg)
+	// if err != nil {
+	// 	return err
+	// }
 	// XXX: This is temporarly needed until https://github.com/mudler/luet/issues/186 is closed
-	input = []byte(string(input) + "\n" +
+	input := []byte(repos + "\n" +
 		`
 system:
   rootfs: ` + rootfs + `
@@ -55,10 +58,6 @@ repos_confdir:
 }
 
 func LuetInstall(rootfs string, packages []string, repositories []string, keepDB bool, fs vfs.FS, spec *schema.SystemSpec) error {
-
-	// for _, d := range []string{"/dev", "/sys", "/proc", "/tmp", "/dev/pt", "/run", "/var/lock", "/luetdb"} {
-	// 	fs.Mkdir(d, os.ModePerm)
-	// }
 	cfgFile := filepath.Join(rootfs, "luet.yaml")
 	cfgRaw, _ := fs.RawPath(cfgFile)
 

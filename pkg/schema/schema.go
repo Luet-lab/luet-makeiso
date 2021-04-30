@@ -21,8 +21,40 @@ type SystemSpec struct {
 }
 
 type Luet struct {
-	Config string `yaml:"config"`
+	Repositories Repositories `yaml:"repositories"`
 }
+
+type LuetRepository struct {
+	Name   string   `yaml:"name"`
+	Enable bool     `yaml:"enable"`
+	Urls   []string `yaml:"urls"`
+	Type   string   `yaml:"type"`
+}
+
+type Repositories []*LuetRepository
+
+func (r Repositories) Marshal() (string, error) {
+	b, err := yaml.Marshal(&Luet{Repositories: r})
+
+	return string(b), err
+}
+
+func genRepo(name, url, t string) *LuetRepository {
+	return &LuetRepository{Name: name, Enable: true, Urls: []string{url}, Type: t}
+}
+
+func NewDockerRepo(name, url string) *LuetRepository {
+	return genRepo(name, url, "docker")
+}
+
+func NewHTTPRepo(name, url string) *LuetRepository {
+	return genRepo(name, url, "http")
+}
+
+func NewLocalRepo(name, path string) *LuetRepository {
+	return genRepo(name, path, "disk")
+}
+
 type Repository struct {
 	Initramfs []string `yaml:"initramfs"`
 	Packages  []string `yaml:"packages"`

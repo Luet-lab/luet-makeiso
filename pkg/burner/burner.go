@@ -6,9 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/briandowns/spinner"
 	"github.com/kyokomi/emoji/v2"
 	"github.com/mudler/luet-makeiso/pkg/schema"
 	"github.com/mudler/luet-makeiso/pkg/utils"
@@ -80,10 +78,6 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {
 		return err
 	}
-
-	sp := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	sp.Start()
-	defer sp.Stop()
 
 	info(":steaming_bowl: Installing Overlay packages")
 	if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {

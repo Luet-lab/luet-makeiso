@@ -3,7 +3,6 @@ module github.com/mudler/luet-makeiso
 go 1.14
 
 require (
-	github.com/briandowns/spinner v1.12.0
 	github.com/diskfs/go-diskfs v1.1.2-0.20210216073915-ba492710e2d8
 	github.com/frankban/quicktest v1.11.3 // indirect
 	github.com/kr/text v0.2.0 // indirect

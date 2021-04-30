@@ -1,6 +1,3 @@
-# github.com/briandowns/spinner v1.12.0
-## explicit
-github.com/briandowns/spinner
 # github.com/diskfs/go-diskfs v1.1.2-0.20210216073915-ba492710e2d8
 ## explicit
 github.com/diskfs/go-diskfs
@@ -14,8 +11,6 @@ github.com/diskfs/go-diskfs/partition/gpt
 github.com/diskfs/go-diskfs/partition/mbr
 github.com/diskfs/go-diskfs/partition/part
 github.com/diskfs/go-diskfs/util
-# github.com/fatih/color v1.7.0
-github.com/fatih/color
 # github.com/frankban/quicktest v1.11.3
 ## explicit
 # github.com/google/uuid v1.1.1
@@ -30,10 +25,6 @@ github.com/kyokomi/emoji/v2
 # github.com/magefile/mage v1.10.0
 github.com/magefile/mage/mg
 github.com/magefile/mage/sh
-# github.com/mattn/go-colorable v0.1.2
-github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.8
-github.com/mattn/go-isatty
 # github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
 ## explicit
 # github.com/pierrec/lz4 v2.3.0+incompatible

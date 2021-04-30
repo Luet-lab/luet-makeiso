@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	CLIVersion = "0.1"
+	CLIVersion = "0.2.1"
 )
 
 // Build time and commit information.
@@ -24,8 +24,6 @@ var (
 	BuildTime   string
 	BuildCommit string
 )
-
-var entityFile string
 
 func fail(s string) {
 	log.Error(s)
@@ -53,7 +51,7 @@ func init() {
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "luet-makeiso",
-	Short:   "generate iso files with luet",
+	Short:   "generate iso images with luet",
 	Version: fmt.Sprintf("%s-g%s %s", CLIVersion, BuildCommit, BuildTime),
 	Long: `It reads iso spec to generate ISO files from luet repositories or trees.
 `,
@@ -63,11 +61,8 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		onlyLocal, _ := cmd.Flags().GetBool("only-local")
 		localPath, _ := cmd.Flags().GetString("local")
-		if onlyLocal && localPath == "" {
-			log.Fatal("--only-local provided, but no --local repository supplied")
-		}
+
 		if !filepath.IsAbs(localPath) {
 			var err error
 			localPath, err = filepath.Abs(localPath)
@@ -78,12 +73,9 @@ var rootCmd = &cobra.Command{
 			spec, err := schema.LoadFromFile(a, vfs.OSFS)
 			checkErr(err)
 
-			if onlyLocal {
-				spec.Luet.Repositories = schema.Repositories{schema.NewLocalRepo("local", localPath)}
-			} else if localPath != "" {
+			if localPath != "" {
 				spec.Luet.Repositories = append(spec.Luet.Repositories, schema.NewLocalRepo("local", localPath))
 			}
-			fmt.Println(spec.Luet.Repositories.Marshal())
 
 			checkErr(burner.Burn(spec, vfs.OSFS))
 		}
@@ -98,9 +90,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("only-local", "o", false, "Use only the local provided repository")
-	rootCmd.Flags().StringP("local", "l", "", "Repository to add")
-
-	//rootCmd.PersistentFlags().StringP("spec", "e", "default", "Executor which applies the config")
-	//rootCmd.PersistentFlags().StringP("spec", "s", "", "Specfile")
+	rootCmd.Flags().StringP("local", "l", "", "A path to a local luet repository to use during iso build")
 }

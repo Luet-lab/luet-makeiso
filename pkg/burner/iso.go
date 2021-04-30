@@ -8,6 +8,8 @@ import (
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
+
+	//	"github.com/diskfs/go-diskfs/partition/mbr"
 	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -15,8 +17,40 @@ import (
 )
 
 func GenISO(diskImage, label, source string, f vfs.FS) error {
-	diskImg, err := f.RawPath(diskImage)
+	if os.Getenv(("XORRISO_NATIVE")) == "true" {
+		return nativeGenISO(diskImage, label, source, f)
+	}
 
+	_, err := run(fmt.Sprintf(
+		`xorriso -as mkisofs \
+		    -volid "%s" \
+		    -isohybrid-mbr %s/boot/syslinux/isohdpfx.bin \
+		    -c boot/syslinux/boot.cat \
+		    -b boot/syslinux/isolinux.bin \
+		      -no-emul-boot \
+		      -boot-load-size 4 \
+		      -boot-info-table \
+		    -eltorito-alt-boot \
+		    -e boot/uefi.img \
+		      -no-emul-boot \
+		      -isohybrid-gpt-basdat \
+		    -o "%s" \
+		  %s`, label, source, diskImage, source))
+	if err != nil {
+		info(err)
+		return err
+	}
+
+	checksum, err := utils.Checksum(diskImage)
+	if err != nil {
+		return errors.Wrap(err, "while calculating checksum")
+	}
+
+	return f.WriteFile(diskImage+".sha256", []byte(fmt.Sprintf("%s %s", checksum, diskImage)), os.ModePerm)
+}
+
+func nativeGenISO(diskImage, label, source string, f vfs.FS) error {
+	diskImg, err := f.RawPath(diskImage)
 	if diskImg == "" {
 		log.Fatal("must have a valid path for diskImg")
 	}
@@ -60,7 +94,8 @@ func GenISO(diskImage, label, source string, f vfs.FS) error {
 				{
 					Platform:  iso9660.EFI,
 					Emulation: iso9660.NoEmulation,
-					BootFile:  "boot/uefi.img",
+					//			SystemType: mbr.EFISystem,
+					BootFile: "boot/uefi.img",
 				},
 			},
 		},

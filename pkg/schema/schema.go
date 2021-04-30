@@ -17,6 +17,7 @@ type SystemSpec struct {
 	Date        bool       `yaml:"image_date"`
 	ImageName   string     `yaml:"image_name"`
 	Arch        string     `yaml:"arch"`
+	UEFIImage   string     `yaml:"uefi_img"`
 }
 
 type Luet struct {

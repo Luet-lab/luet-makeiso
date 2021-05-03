@@ -5,6 +5,7 @@ Golang extension to build ISOs with Luet
 ## Requirements
 
 - mksquashfs
+- xorriso
 
 This tool generates ISO reading specfiles in the following syntax:
 
@@ -38,11 +39,25 @@ initramfs:
 image_prefix: "MocaccinoOS-Micro-0."
 image_date: true
 
-# Luet config to use.
-# It has to contain the repositories required to install the packages defined above.
+# Luet repositories (https://luet-lab.github.io/docs/docs/getting-started/#configuration-in-etcluetreposconfd) to use.
 luet:
-  config: conf/luet-micro.yaml
+  repositories:
+  - name: "mocaccino-desktop-stable" # Repository name
+    type: "http" # Repository type, disk, docker or http are supported (disk for local path)
+    enable: true # Enable/Disable repo
+    urls: # Repository URLs
+      - "https://get.mocaccino.org/mocaccino-desktop-stable"
+
 ```
+
+## Usage
+
+```bash
+$ luet-makeiso <specfile>
+```
+
+Flags:
+- **local**: Path to local luet repository to use to install packages from
 
 ## Configuration reference
 

@@ -40,7 +40,7 @@ func run(cmd string, opts ...func(cmd *exec.Cmd)) error {
 	for _, o := range opts {
 		o(c)
 	}
-	c.Env = []string{"LUET_NOLOCK=true", "LUET_YES=true"}
+	c.Env = []string{fmt.Sprintf("PATH=%s", os.Getenv("PATH")), "LUET_NOLOCK=true", "LUET_YES=true"}
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	err := c.Start()

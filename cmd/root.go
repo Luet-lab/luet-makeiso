@@ -62,6 +62,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		localPath, _ := cmd.Flags().GetString("local")
+		image, _ := cmd.Flags().GetString("image")
 
 		if localPath != "" && !filepath.IsAbs(localPath) {
 			var err error
@@ -72,6 +73,10 @@ var rootCmd = &cobra.Command{
 		for _, a := range args {
 			spec, err := schema.LoadFromFile(a, vfs.OSFS)
 			checkErr(err)
+
+			if image != "" {
+				spec.RootfsImage = image
+			}
 
 			if localPath != "" {
 				spec.Luet.Repositories = append(spec.Luet.Repositories, schema.NewLocalRepo("local", localPath))
@@ -90,4 +95,5 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().StringP("local", "l", "", "A path to a local luet repository to use during iso build")
+	rootCmd.Flags().StringP("image", "i", "", "An image reference to use as a rootfs for the ISO")
 }

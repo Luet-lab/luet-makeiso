@@ -51,6 +51,23 @@ func run(cmd string, opts ...func(cmd *exec.Cmd)) error {
 	return c.Wait()
 }
 
+func runEnv(cmd string, opts ...func(cmd *exec.Cmd)) error {
+	log.Debugf("running command `%s`", cmd)
+	c := exec.Command("sh", "-c", cmd)
+	for _, o := range opts {
+		o(c)
+	}
+	c.Env = os.Environ()
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	err := c.Start()
+	if err != nil {
+		return fmt.Errorf("failed to run %s: %v", cmd, err)
+	}
+
+	return c.Wait()
+}
+
 func CopyDir(src string, dst string, f filesystem.FileSystem) error {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)

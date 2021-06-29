@@ -10,6 +10,7 @@ import (
 	"github.com/kyokomi/emoji/v2"
 	"github.com/mudler/luet-makeiso/pkg/schema"
 	"github.com/mudler/luet-makeiso/pkg/utils"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
@@ -80,9 +81,21 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	}
 
 	info(":steaming_bowl: Installing Overlay packages")
-	if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {
-		return err
+
+	if s.RootfsImage != "" {
+		info(":steaming_bowl: Downloading container image")
+		if err := LuetImageUnpack(s.RootfsImage, tempOverlayfs); err != nil {
+			return err
+		}
+	} else if len(s.Packages.Rootfs) > 0 {
+		info(":steaming_bowl: Installing luet packages")
+		if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {
+			return err
+		}
+	} else {
+		return errors.New("No container image or packages specified in the yaml file")
 	}
+
 	kernelFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.KernelFile)
 	initrdFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.RootfsFile)
 

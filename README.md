@@ -35,6 +35,9 @@ initramfs:
   kernel_file: "bzImage"
   rootfs_file: "rootfs.cpio.xz"
 
+# Specify a container remote image to pull and use for the rootfs in place of packages (optional)
+rootfs_image: ""
+
 # Image prefix. If Image date is disabled is used as the full title.
 image_prefix: "MocaccinoOS-Micro-0."
 image_date: true
@@ -61,6 +64,9 @@ Flags:
 
 ## Configuration reference
 
+### `rootfs_image`
+
+A container image reference (e.g. `quay.io/.../...:latest`) that will be used as a rootfs for the ISO.
 
 ### `packages.rootfs`
 

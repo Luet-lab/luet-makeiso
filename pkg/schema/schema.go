@@ -18,6 +18,7 @@ type SystemSpec struct {
 	ImageName   string     `yaml:"image_name"`
 	Arch        string     `yaml:"arch"`
 	UEFIImage   string     `yaml:"uefi_img"`
+	RootfsImage string     `yaml:"rootfs_image"`
 }
 
 type Luet struct {

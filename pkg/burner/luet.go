@@ -40,6 +40,10 @@ repos_confdir:
 	return nil
 }
 
+func LuetImageUnpack(image, destination string) error {
+	return runEnv(fmt.Sprintf("luet util unpack %s %s", image, destination))
+}
+
 func LuetInstall(rootfs string, packages []string, repositories []string, keepDB bool, fs vfs.FS, spec *schema.SystemSpec) error {
 	cfgFile := filepath.Join(rootfs, "luet.yaml")
 	cfgRaw, _ := fs.RawPath(cfgFile)

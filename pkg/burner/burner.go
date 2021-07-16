@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kyokomi/emoji/v2"
 	"github.com/mudler/luet-makeiso/pkg/schema"
@@ -82,10 +83,14 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 
 	info(":steaming_bowl: Installing Overlay packages")
 	if s.RootfsImage != "" {
+		image := s.RootfsImage
+		if !strings.Contains(image, ":") {
+			image = image + ":latest"
+		}
 		// Check if we have it locally in docker first, uncompress the image using luet
-		if contains(DockerImages(), s.RootfsImage) {
-			info("Image found locally, using it")
-			if err := DockerExtract(s.RootfsImage, tempOverlayfs); err != nil {
+		if contains(DockerImages(), image) {
+			info(fmt.Sprintf("Image '%s' found locally, using it", image))
+			if err := DockerExtract(image, tempOverlayfs); err != nil {
 				return err
 			}
 		} else {

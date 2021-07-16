@@ -47,7 +47,7 @@ func runO(cmd string, opts ...func(cmd *exec.Cmd)) (string, error) {
 
 	log.Debugf("running command `%s`", cmd)
 	c := exec.Command("sh", "-c", cmd)
-	c.Env = []string{fmt.Sprintf("PATH=%s", os.Getenv("PATH"))}
+	c.Env = os.Environ()
 
 	for _, o := range opts {
 		o(c)

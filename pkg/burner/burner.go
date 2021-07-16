@@ -81,11 +81,18 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	}
 
 	info(":steaming_bowl: Installing Overlay packages")
-
 	if s.RootfsImage != "" {
-		info(":steaming_bowl: Downloading container image")
-		if err := LuetImageUnpack(s.RootfsImage, tempOverlayfs); err != nil {
-			return err
+		// Check if we have it locally in docker first, uncompress the image using luet
+		if contains(DockerImages(), s.RootfsImage) {
+			info("Image found locally, using it")
+			if err := DockerExtract(s.RootfsImage, tempOverlayfs); err != nil {
+				return err
+			}
+		} else {
+			info(":steaming_bowl: Downloading container image")
+			if err := LuetImageUnpack(s.RootfsImage, tempOverlayfs); err != nil {
+				return err
+			}
 		}
 	} else if len(s.Packages.Rootfs) > 0 {
 		info(":steaming_bowl: Installing luet packages")

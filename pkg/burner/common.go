@@ -34,6 +34,30 @@ func CopyFile(src, dst string, f filesystem.FileSystem) (err error) {
 	return
 }
 
+func contains(list []string, s string) bool {
+	for _, elem := range list {
+		if elem == s {
+			return true
+		}
+	}
+	return false
+}
+
+func runO(cmd string, opts ...func(cmd *exec.Cmd)) (string, error) {
+
+	log.Debugf("running command `%s`", cmd)
+	c := exec.Command("sh", "-c", cmd)
+	c.Env = []string{fmt.Sprintf("PATH=%s", os.Getenv("PATH"))}
+
+	for _, o := range opts {
+		o(c)
+	}
+
+	out, err := c.CombinedOutput()
+
+	return string(out), err
+}
+
 func run(cmd string, opts ...func(cmd *exec.Cmd)) error {
 	log.Debugf("running command `%s`", cmd)
 	c := exec.Command("sh", "-c", cmd)

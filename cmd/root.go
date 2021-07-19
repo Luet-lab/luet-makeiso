@@ -63,6 +63,7 @@ var rootCmd = &cobra.Command{
 
 		localPath, _ := cmd.Flags().GetString("local")
 		image, _ := cmd.Flags().GetString("image")
+		output, _ := cmd.Flags().GetString("output")
 
 		if localPath != "" && !filepath.IsAbs(localPath) {
 			var err error
@@ -76,6 +77,11 @@ var rootCmd = &cobra.Command{
 
 			if image != "" {
 				spec.RootfsImage = image
+			}
+			if output != "" {
+				spec.ImageName = output
+				spec.Date = false
+				spec.ImagePrefix = ""
 			}
 
 			if localPath != "" {
@@ -96,4 +102,5 @@ func Execute() {
 func init() {
 	rootCmd.Flags().StringP("local", "l", "", "A path to a local luet repository to use during iso build")
 	rootCmd.Flags().StringP("image", "i", "", "An image reference to use as a rootfs for the ISO")
+	rootCmd.Flags().StringP("output", "o", "", "Name of the output ISO file (overrides yaml config)")
 }

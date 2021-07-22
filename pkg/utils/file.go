@@ -7,8 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/otiai10/copy"
 	"github.com/twpayne/go-vfs"
 )
+
+func CopyContent(src, dst string) error {
+	opt := copy.Options{
+		OnSymlink: func(string) copy.SymlinkAction { return copy.Shallow },
+		Sync:      true,
+	}
+	return copy.Copy(src, dst, opt)
+}
 
 func CopyFile(src, dst string, fs vfs.FS) error {
 	_, err := fs.Stat(src)

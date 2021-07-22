@@ -13,12 +13,15 @@ type SystemSpec struct {
 	Packages    Packages   `yaml:"packages"`
 	Luet        Luet       `yaml:"luet"`
 	Repository  Repository `yaml:"repository"`
+	Overlay     Overlay    `yaml:"overlay"`
 	ImagePrefix string     `yaml:"image_prefix"`
 	Date        bool       `yaml:"image_date"`
 	ImageName   string     `yaml:"image_name"`
 	Arch        string     `yaml:"arch"`
 	UEFIImage   string     `yaml:"uefi_img"`
 	RootfsImage string     `yaml:"rootfs_image"`
+
+	EnsureCommonDirs bool `yaml:"ensure_common_dirs"`
 }
 
 type Luet struct {
@@ -68,6 +71,13 @@ type Packages struct {
 	Initramfs  []string `yaml:"initramfs"`
 	IsoImage   []string `yaml:"isoimage"`
 	UEFI       []string `yaml:"uefi"`
+}
+
+// Overlay represent additional folders to overlay on top of the rootfs, isoimage, or UEFI partition
+type Overlay struct {
+	Rootfs   string `yaml:"rootfs"`
+	IsoImage string `yaml:"isoimage"`
+	UEFI     string `yaml:"uefi"`
 }
 
 type Initramfs struct {

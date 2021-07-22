@@ -54,34 +54,24 @@ func info(a ...interface{}) {
 	log.Info(emoji.Sprint(a...))
 }
 
-func Burn(s *schema.SystemSpec, fs vfs.FS) error {
-
-	dir, err := ioutil.TempDir("", "luet-geniso")
-	if err != nil {
-		return err
+func ensureDirs(path string) {
+	modes := map[os.FileMode][]string{
+		0755: {"/dev", "/run"},
+		0555: {"/sys", "/proc"},
+		1777: {"/tmp"},
 	}
-	defer os.RemoveAll(dir)
-
-	if s.Arch == "" {
-		s.Arch = "x86_64"
+	for mode, paths := range modes {
+		for _, p := range paths {
+			cpath := filepath.Join(path, p)
+			if _, err := os.Stat(cpath); err != nil && os.IsNotExist(err) {
+				info(fmt.Sprintf("dir '%s' missing from rootfs. creating with %+v", cpath, mode))
+				os.MkdirAll(cpath, mode)
+			}
+		}
 	}
+}
 
-	tempRootfs := filepath.Join(dir, "rootfs")
-	tempOverlayfs := filepath.Join(dir, "overlayfs")
-	tempUEFI := filepath.Join(dir, "tempUEFI")
-	tempISO := filepath.Join(dir, "tempISO")
-
-	defer fs.RemoveAll(tempRootfs)
-	defer fs.RemoveAll(tempOverlayfs)
-	defer fs.RemoveAll(tempUEFI)
-	defer fs.RemoveAll(tempISO)
-
-	info(":mag: Preparing folders")
-	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {
-		return err
-	}
-
-	info(":steaming_bowl: Installing Overlay packages")
+func prepareRootfs(s *schema.SystemSpec, fs vfs.FS, tempOverlayfs string) error {
 	if s.RootfsImage != "" {
 		image := s.RootfsImage
 		if !strings.Contains(image, ":") {
@@ -104,12 +94,22 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 		if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {
 			return err
 		}
-	} else {
-		return errors.New("No container image or packages specified in the yaml file")
 	}
 
-	kernelFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.KernelFile)
-	initrdFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.RootfsFile)
+	if s.Overlay.Rootfs != "" {
+		info(":steaming_bowl: Adding files to rootfs from overlay")
+		if err := utils.CopyContent(s.Overlay.Rootfs, tempOverlayfs); err != nil {
+			return err
+		}
+	}
+
+	if s.EnsureCommonDirs {
+		ensureDirs(tempOverlayfs)
+	}
+	return nil
+}
+
+func prepareUEFI(s *schema.SystemSpec, fs vfs.FS, tempISO, tempUEFI, kernelFile, initrdFile string) error {
 
 	if s.UEFIImage == "" {
 		// Generate efi image
@@ -133,6 +133,13 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 
 		if err := vfs.MkdirAll(fs, filepath.Join(tempISO, "boot"), os.ModePerm); err != nil {
 			return err
+		}
+
+		if s.Overlay.UEFI != "" {
+			info(":steaming_bowl: Adding files to EFI from overlay")
+			if err := utils.CopyContent(s.Overlay.UEFI, tempUEFI); err != nil {
+				return err
+			}
 		}
 
 		info(":superhero:Creating EFI image")
@@ -160,7 +167,10 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 			return err
 		}
 	}
+	return nil
+}
 
+func prepareISO(s *schema.SystemSpec, fs vfs.FS, tempISO, tempOverlayfs, kernelFile, initrdFile string) error {
 	info(":thinking:Populating ISO folder")
 	if err := LuetInstall(tempISO, s.Packages.IsoImage, s.Repository.Packages, false, fs, s); err != nil {
 		return err
@@ -177,6 +187,62 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 
 	info(":tv:Create squashfs")
 	if err := CreateSquashfs(filepath.Join(tempISO, "rootfs.squashfs"), "squashfs", tempOverlayfs, fs); err != nil {
+		return err
+	}
+
+	if s.Overlay.IsoImage != "" {
+		info(":steaming_bowl: Adding files to ISO from overlay")
+		if err := utils.CopyContent(s.Overlay.IsoImage, tempISO); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Burn(s *schema.SystemSpec, fs vfs.FS) error {
+
+	if s.RootfsImage == "" && len(s.Packages.Rootfs) == 0 && len(s.Overlay.Rootfs) == 0 {
+		return errors.New("No container image, packages or overlay specified in the yaml file")
+	}
+
+	dir, err := ioutil.TempDir("", "luet-geniso")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	if s.Arch == "" {
+		s.Arch = "x86_64"
+	}
+
+	tempRootfs := filepath.Join(dir, "rootfs")
+	tempOverlayfs := filepath.Join(dir, "overlayfs")
+	tempUEFI := filepath.Join(dir, "tempUEFI")
+	tempISO := filepath.Join(dir, "tempISO")
+
+	defer fs.RemoveAll(tempRootfs)
+	defer fs.RemoveAll(tempOverlayfs)
+	defer fs.RemoveAll(tempUEFI)
+	defer fs.RemoveAll(tempISO)
+
+	info(":mag: Preparing folders")
+	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {
+		return err
+	}
+
+	info(":steaming_bowl: Installing Overlay packages")
+	if err := prepareRootfs(s, fs, tempOverlayfs); err != nil {
+		return err
+	}
+
+	kernelFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.KernelFile)
+	initrdFile := filepath.Join(tempOverlayfs, "boot", s.Initramfs.RootfsFile)
+
+	if err := prepareUEFI(s, fs, tempISO, tempUEFI, kernelFile, initrdFile); err != nil {
+		return err
+	}
+
+	if err := prepareISO(s, fs, tempISO, tempOverlayfs, kernelFile, initrdFile); err != nil {
 		return err
 	}
 

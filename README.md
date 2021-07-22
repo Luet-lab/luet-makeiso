@@ -92,6 +92,32 @@ The kernel file under `/boot/` that is your running  kernel. e.g. `vmlinuz` or `
 
 The initrd file under `/boot/` that has all the utils for the initramfs
 
+### `overlay.isoimage`
+
+```yaml
+overlay:
+  isoimage: "dir"
+```
+
+Path to a folder which content will be copied over the ISO (before generating the ISO file).
+
+### `overlay.uefi`
+
+```yaml
+overlay:
+  uefi: "dir"
+```
+
+Path to a folder which content will be copied over the UEFI partition (before generating the image).
+
+### `overlay.rootfs`
+
+```yaml
+overlay:
+  rootfs: "dir"
+```
+
+Path to a folder which content will be copied over the rootfs (before generating squashfs).
 ### `image_prefix`
 
 ISO image prefix to use

@@ -199,7 +199,7 @@ func prepareISO(s *schema.SystemSpec, fs vfs.FS, tempISO, tempOverlayfs, kernelF
 	return nil
 }
 
-func Burn(s *schema.SystemSpec, fs vfs.FS) error {
+func Burn(s *schema.SystemSpec, fs vfs.FS, cleanStagingDirs bool) error {
 
 	if s.RootfsImage == "" && len(s.Packages.Rootfs) == 0 && len(s.Overlay.Rootfs) == 0 {
 		return errors.New("No container image, packages or overlay specified in the yaml file")
@@ -209,7 +209,9 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(dir)
+	if cleanStagingDirs {
+		defer os.RemoveAll(dir)
+	}
 
 	if s.Arch == "" {
 		s.Arch = "x86_64"
@@ -220,10 +222,12 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	tempUEFI := filepath.Join(dir, "tempUEFI")
 	tempISO := filepath.Join(dir, "tempISO")
 
-	defer fs.RemoveAll(tempRootfs)
-	defer fs.RemoveAll(tempOverlayfs)
-	defer fs.RemoveAll(tempUEFI)
-	defer fs.RemoveAll(tempISO)
+	if cleanStagingDirs {
+		defer fs.RemoveAll(tempRootfs)
+		defer fs.RemoveAll(tempOverlayfs)
+		defer fs.RemoveAll(tempUEFI)
+		defer fs.RemoveAll(tempISO)
+	}
 
 	info(":mag: Preparing folders")
 	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {

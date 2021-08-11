@@ -29,8 +29,14 @@ type SystemSpec struct {
 	EnsureCommonDirs bool `yaml:"ensure_common_dirs"`
 }
 
+type LuetKV struct {
+	Key   string `yaml:"key"`
+	Value string `yaml:"value"`
+}
+
 type Luet struct {
-	Repositories Repositories `yaml:"repositories"`
+	Repositories  Repositories `yaml:"repositories"`
+	FinalizerEnvs []LuetKV     `yaml:"finalizer_envs,omitempty"`
 }
 
 type LuetRepository struct {
@@ -43,8 +49,8 @@ type LuetRepository struct {
 
 type Repositories []*LuetRepository
 
-func (r Repositories) Marshal() (string, error) {
-	b, err := yaml.Marshal(&Luet{Repositories: r})
+func (l *Luet) Marshal() (string, error) {
+	b, err := yaml.Marshal(l)
 
 	return string(b), err
 }

@@ -12,7 +12,7 @@ import (
 
 func copyConfig(config, rootfsWanted string, fs vfs.FS, s *schema.SystemSpec) error {
 	//	cfg, _ := fs.RawPath(s.Luet.Config)
-	repos, err := s.Luet.Repositories.Marshal()
+	luetCfg, err := s.Luet.Marshal()
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func copyConfig(config, rootfsWanted string, fs vfs.FS, s *schema.SystemSpec) er
 	// 	return err
 	// }
 	// XXX: This is temporarly needed until https://github.com/mudler/luet/issues/186 is closed
-	input := []byte(repos + "\n" +
+	input := []byte(luetCfg + "\n" +
 		`
 system:
   rootfs: ` + rootfs + `

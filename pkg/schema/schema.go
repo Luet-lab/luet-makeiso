@@ -40,11 +40,12 @@ type Luet struct {
 }
 
 type LuetRepository struct {
-	Name     string   `yaml:"name"`
-	Enable   bool     `yaml:"enable"`
-	Urls     []string `yaml:"urls"`
-	Type     string   `yaml:"type"`
-	Priority int      `yaml:"priority"`
+	Name           string            `yaml:"name"`
+	Enable         bool              `yaml:"enable"`
+	Urls           []string          `yaml:"urls"`
+	Type           string            `yaml:"type"`
+	Priority       int               `yaml:"priority"`
+	Authentication map[string]string `yaml:"auth,omitempty"`
 }
 
 type Repositories []*LuetRepository

@@ -89,7 +89,19 @@ func prepareRootfs(s *schema.SystemSpec, fs vfs.FS, tempOverlayfs string) error 
 				return err
 			}
 		}
+
+		if s.EnsureCommonDirs {
+			info(":steaming_bowl: Ensure commons dirs.")
+			ensureDirs(tempOverlayfs)
+		}
+
 	} else if len(s.Packages.Rootfs) > 0 {
+
+		if s.EnsureCommonDirs {
+			info(":steaming_bowl: Ensure commons dirs.")
+			ensureDirs(tempOverlayfs)
+		}
+
 		info(":steaming_bowl: Installing luet packages")
 		if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {
 			return err
@@ -103,9 +115,6 @@ func prepareRootfs(s *schema.SystemSpec, fs vfs.FS, tempOverlayfs string) error 
 		}
 	}
 
-	if s.EnsureCommonDirs {
-		ensureDirs(tempOverlayfs)
-	}
 	return nil
 }
 

@@ -252,5 +252,5 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 		fs.RemoveAll(s.ISOName())
 	}
 
-	return GenISO(s.ISOName(), s.Label, tempISO, fs)
+	return GenISO(s, tempISO, fs)
 }

@@ -3,6 +3,7 @@ package schema
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/twpayne/go-vfs"
 	"gopkg.in/yaml.v2"
 )
@@ -20,6 +21,10 @@ type SystemSpec struct {
 	Arch        string     `yaml:"arch"`
 	UEFIImage   string     `yaml:"uefi_img"`
 	RootfsImage string     `yaml:"rootfs_image"`
+
+	BootFile     string `yaml:"boot_file"`
+	BootCatalog  string `yaml:"boot_catalog"`
+	IsoHybridMBR string `yaml:"isohybrid_mbr"`
 
 	EnsureCommonDirs bool `yaml:"ensure_common_dirs"`
 }
@@ -110,7 +115,25 @@ func LoadFromFile(s string, fs vfs.FS) (*SystemSpec, error) {
 		return nil, err
 	}
 
-	return LoadFromYaml(yamlFile)
+	spec, err := LoadFromYaml(yamlFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "while reading system spec")
+	}
+
+	return setDefaults(spec), nil
+}
+
+func setDefaults(s *SystemSpec) *SystemSpec {
+	if s.BootCatalog == "" {
+		s.BootCatalog = "boot/syslinux/boot.cat" // defaults to syslinux
+	}
+	if s.BootFile == "" {
+		s.BootFile = "boot/syslinux/isolinux.bin"
+	}
+	if s.IsoHybridMBR == "" {
+		s.IsoHybridMBR = "boot/syslinux/isohdpfx.bin"
+	}
+	return s
 }
 
 // LoadFromYaml loads a config from bytes

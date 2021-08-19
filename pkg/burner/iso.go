@@ -10,23 +10,28 @@ import (
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 
 	//	"github.com/diskfs/go-diskfs/partition/mbr"
+	"github.com/mudler/luet-makeiso/pkg/schema"
 	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
 
-func GenISO(diskImage, label, source string, f vfs.FS) error {
+func GenISO(s *schema.SystemSpec, source string, f vfs.FS) error {
+
+	diskImage := s.ISOName()
+	label := s.Label
+
 	if os.Getenv(("XORRISO_NATIVE")) == "true" {
-		return nativeGenISO(diskImage, label, source, f)
+		return nativeGenISO(s, source, f)
 	}
 
 	if err := run(fmt.Sprintf(
 		`xorriso -as mkisofs \
 		    -volid "%s" \
-		    -isohybrid-mbr %s/boot/syslinux/isohdpfx.bin \
-		    -c boot/syslinux/boot.cat \
-		    -b boot/syslinux/isolinux.bin \
+		    -isohybrid-mbr %s/%s \
+		    -c %s \
+		    -b %s \
 		      -no-emul-boot \
 		      -boot-load-size 4 \
 		      -boot-info-table \
@@ -35,7 +40,7 @@ func GenISO(diskImage, label, source string, f vfs.FS) error {
 		      -no-emul-boot \
 		      -isohybrid-gpt-basdat \
 		    -o "%s" \
-		  %s`, label, source, diskImage, source)); err != nil {
+		  %s`, label, source, s.IsoHybridMBR, s.BootCatalog, s.BootFile, diskImage, source)); err != nil {
 		info(err)
 		return err
 	}
@@ -48,13 +53,24 @@ func GenISO(diskImage, label, source string, f vfs.FS) error {
 	return f.WriteFile(diskImage+".sha256", []byte(fmt.Sprintf("%s %s", checksum, diskImage)), os.ModePerm)
 }
 
-func nativeGenISO(diskImage, label, source string, f vfs.FS) error {
+func nativeGenISO(s *schema.SystemSpec, source string, f vfs.FS) error {
+	diskImage := s.ISOName()
+	label := s.Label
+
 	diskImg, err := f.RawPath(diskImage)
+	if err != nil {
+		return errors.Wrapf(err, "while converting to rawpath")
+	}
+
 	if diskImg == "" {
 		log.Fatal("must have a valid path for diskImg")
 	}
 
 	diskSize, err := utils.DirSize(source)
+	if err != nil {
+		return errors.Wrapf(err, "while getting directory size")
+	}
+
 	mydisk, err := diskfs.Create(diskImg, diskSize, diskfs.Raw)
 	if err != nil {
 		return errors.Wrapf(err, "while creating disk")
@@ -81,12 +97,12 @@ func nativeGenISO(diskImage, label, source string, f vfs.FS) error {
 	options := iso9660.FinalizeOptions{
 		VolumeIdentifier: label,
 		ElTorito: &iso9660.ElTorito{
-			BootCatalog: "boot/syslinux/boot.cat",
+			BootCatalog: s.BootCatalog,
 			Entries: []*iso9660.ElToritoEntry{
 				{
 					Platform:  iso9660.BIOS,
 					Emulation: iso9660.NoEmulation,
-					BootFile:  "boot/syslinux/isolinux.bin",
+					BootFile:  s.BootFile,
 					BootTable: true,
 					LoadSize:  4,
 				},

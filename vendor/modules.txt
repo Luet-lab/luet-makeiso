@@ -313,8 +313,6 @@ github.com/klauspost/cpuid
 github.com/klauspost/pgzip
 # github.com/knqyf263/go-deb-version v0.0.0-20190517075300-09fca494f03d
 github.com/knqyf263/go-deb-version
-# github.com/kr/text v0.2.0
-## explicit
 # github.com/kyokomi/emoji v2.1.0+incompatible
 github.com/kyokomi/emoji
 # github.com/kyokomi/emoji/v2 v2.2.8
@@ -450,8 +448,6 @@ github.com/mudler/luet/pkg/solver
 github.com/mudler/luet/pkg/versioner
 # github.com/mudler/topsort v0.0.0-20201103161459-db5c7901c290
 github.com/mudler/topsort
-# github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
-## explicit
 # github.com/openSUSE/umoci v0.1.1-0.20191030112807-c0dd46ae078f
 github.com/openSUSE/umoci/oci/cas
 github.com/openSUSE/umoci/oci/casext
@@ -536,8 +532,6 @@ github.com/spf13/jwalterweatherman
 github.com/spf13/pflag
 # github.com/spf13/viper v1.7.1
 github.com/spf13/viper
-# github.com/stretchr/testify v1.6.1
-## explicit
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
 # github.com/theupdateframework/notary v0.7.0
@@ -667,7 +661,6 @@ golang.org/x/tools/internal/lsp/fuzzy
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.6.6
@@ -753,8 +746,6 @@ google.golang.org/protobuf/runtime/protoimpl
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
-# gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
-## explicit
 # gopkg.in/djherbis/times.v1 v1.2.0
 gopkg.in/djherbis/times.v1
 # gopkg.in/inf.v0 v0.9.1

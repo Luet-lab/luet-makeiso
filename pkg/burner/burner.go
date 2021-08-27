@@ -186,7 +186,7 @@ func prepareISO(s *schema.SystemSpec, fs vfs.FS, tempISO, tempOverlayfs, kernelF
 	}
 
 	info(":tv:Create squashfs")
-	if err := CreateSquashfs(filepath.Join(tempISO, "rootfs.squashfs"), "squashfs", tempOverlayfs, fs); err != nil {
+	if err := CreateSquashfs(filepath.Join(tempISO, "rootfs.squashfs"), tempOverlayfs, s.SquashfsOptions, fs); err != nil {
 		return err
 	}
 

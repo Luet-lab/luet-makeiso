@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mudler/luet-makeiso/pkg/schema"
 	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/twpayne/go-vfs"
@@ -51,7 +52,7 @@ func CreateFilesystem(d *disk.Disk, spec disk.FilesystemSpec) (filesystem.FileSy
 }
 
 // XXX: This doesn't work still
-func nativeSquashfs(diskImage, label, source string, f vfs.FS) error {
+func nativeSquashfs(diskImage, source string, options schema.SquashfsOptions, f vfs.FS) error {
 
 	diskImg, err := f.RawPath(diskImage)
 
@@ -66,7 +67,7 @@ func nativeSquashfs(diskImage, label, source string, f vfs.FS) error {
 	}
 
 	mydisk.LogicalBlocksize = 4096
-	fspec := disk.FilesystemSpec{Partition: 0, FSType: filesystem.TypeSquashfs, VolumeLabel: label}
+	fspec := disk.FilesystemSpec{Partition: 0, FSType: filesystem.TypeSquashfs, VolumeLabel: options.Label}
 	fs, err := CreateFilesystem(mydisk, fspec)
 	if err != nil {
 		return errors.Wrapf(err, "while creating squashfs size: %d", size)
@@ -84,9 +85,13 @@ func nativeSquashfs(diskImage, label, source string, f vfs.FS) error {
 	return sqs.Finalize(squashfs.FinalizeOptions{})
 }
 
-func CreateSquashfs(diskImage, label, source string, f vfs.FS) error {
+func CreateSquashfs(diskImage string, source string, options schema.SquashfsOptions, f vfs.FS) error {
 	if os.Getenv(("NATIVE")) == "true" {
-		return nativeSquashfs(diskImage, label, source, f)
+		return nativeSquashfs(diskImage, source, options, f)
 	}
-	return run(fmt.Sprintf("mksquashfs %s %s -b 1024k -comp xz -Xbcj x86", source, diskImage))
+	cmd := fmt.Sprintf("mksquashfs %s %s -b 1024k -comp %s", source, diskImage, options.Compression)
+	if options.CompressionOptions != "" {
+		cmd = fmt.Sprintf("%s %s", cmd, options.CompressionOptions)
+	}
+	return run(cmd)
 }

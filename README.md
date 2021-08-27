@@ -138,6 +138,14 @@ A string representing the arch. Defaults to `x86_64`.
 
 Path to the luet config to use to install the packages from
 
+### `squashfs_options.compression`
+
+Squashfs compressor. Defaults to `xz`.
+
+### `squashfs_options.compression_options`
+
+Squashfs compressor specific options. Defaults to `-Xbcj x86` if `squashfs_options.compression` is `xz`.
+
 ## Build
 
 Run `go build` or `make build` from the checkout.

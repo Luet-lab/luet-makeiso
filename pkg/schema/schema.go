@@ -9,18 +9,19 @@ import (
 )
 
 type SystemSpec struct {
-	Initramfs   Initramfs  `yaml:"initramfs"`
-	Label       string     `yaml:"label"`
-	Packages    Packages   `yaml:"packages"`
-	Luet        Luet       `yaml:"luet"`
-	Repository  Repository `yaml:"repository"`
-	Overlay     Overlay    `yaml:"overlay"`
-	ImagePrefix string     `yaml:"image_prefix"`
-	Date        bool       `yaml:"image_date"`
-	ImageName   string     `yaml:"image_name"`
-	Arch        string     `yaml:"arch"`
-	UEFIImage   string     `yaml:"uefi_img"`
-	RootfsImage string     `yaml:"rootfs_image"`
+	Initramfs       Initramfs       `yaml:"initramfs"`
+	Label           string          `yaml:"label"`
+	Packages        Packages        `yaml:"packages"`
+	Luet            Luet            `yaml:"luet"`
+	Repository      Repository      `yaml:"repository"`
+	Overlay         Overlay         `yaml:"overlay"`
+	ImagePrefix     string          `yaml:"image_prefix"`
+	Date            bool            `yaml:"image_date"`
+	ImageName       string          `yaml:"image_name"`
+	Arch            string          `yaml:"arch"`
+	UEFIImage       string          `yaml:"uefi_img"`
+	RootfsImage     string          `yaml:"rootfs_image"`
+	SquashfsOptions SquashfsOptions `yaml:"squashfs_options"`
 
 	BootFile     string `yaml:"boot_file"`
 	BootCatalog  string `yaml:"boot_catalog"`
@@ -90,6 +91,12 @@ type Initramfs struct {
 	RootfsFile string `yaml:"rootfs_file"`
 }
 
+type SquashfsOptions struct {
+	Compression        string `yaml:"compression"`
+	CompressionOptions string `yaml:"compression_options"`
+	Label              string `yaml:"label"`
+}
+
 func (s *SystemSpec) ISOName() (imageName string) {
 	if s.ImageName != "" {
 		imageName = s.ImageName
@@ -132,6 +139,15 @@ func setDefaults(s *SystemSpec) *SystemSpec {
 	}
 	if s.IsoHybridMBR == "" {
 		s.IsoHybridMBR = "boot/syslinux/isohdpfx.bin"
+	}
+	if s.SquashfsOptions.Label == "" {
+		s.SquashfsOptions.Label = "squashfs"
+	}
+	if s.SquashfsOptions.Compression == "" {
+		s.SquashfsOptions.Compression = "xz"
+		if s.SquashfsOptions.CompressionOptions == "" {
+			s.SquashfsOptions.CompressionOptions = "-Xbcj x86"
+		}
 	}
 	return s
 }

@@ -118,21 +118,24 @@ func prepareUEFI(s *schema.SystemSpec, fs vfs.FS, tempISO, tempUEFI, kernelFile,
 			return err
 		}
 
-		info(":superhero:Copying EFI kernels")
-		if err := vfs.MkdirAll(fs, filepath.Join(tempUEFI, "minimal", s.Arch), os.ModePerm); err != nil {
-			return err
-		}
+		// FIXME this is a hack to keep backward compatibility. luet-makeiso assumes
+		// systemd-boot for EFI boot when syslinux is being used. Systemd-boot is not capable to load
+		// the kernel and initrd from anywhere else than the EFI partition. Becuase of that in that particular
+		// case the kernel and initrd are duplicated. We should use syslinux efi instead and consider an alternate
+		// execution path or config setup for systemd-boot.
+		if strings.Contains(s.BootFile, "isolinux") {
+			info(":superhero:Copying EFI kernels")
+			if err := vfs.MkdirAll(fs, filepath.Join(tempUEFI, "minimal", s.Arch), os.ModePerm); err != nil {
+				return err
+			}
 
-		if err := utils.CopyFile(kernelFile, filepath.Join(tempUEFI, "minimal", s.Arch, "kernel.xz"), fs); err != nil {
-			return err
-		}
+			if err := utils.CopyFile(kernelFile, filepath.Join(tempUEFI, "minimal", s.Arch, "kernel.xz"), fs); err != nil {
+				return err
+			}
 
-		if err := utils.CopyFile(initrdFile, filepath.Join(tempUEFI, "minimal", s.Arch, "rootfs.xz"), fs); err != nil {
-			return err
-		}
-
-		if err := vfs.MkdirAll(fs, filepath.Join(tempISO, "boot"), os.ModePerm); err != nil {
-			return err
+			if err := utils.CopyFile(initrdFile, filepath.Join(tempUEFI, "minimal", s.Arch, "rootfs.xz"), fs); err != nil {
+				return err
+			}
 		}
 
 		if s.Overlay.UEFI != "" {
@@ -143,6 +146,10 @@ func prepareUEFI(s *schema.SystemSpec, fs vfs.FS, tempISO, tempUEFI, kernelFile,
 		}
 
 		info(":superhero:Creating EFI image")
+		if err := vfs.MkdirAll(fs, filepath.Join(tempISO, "boot"), os.ModePerm); err != nil {
+			return err
+		}
+
 		if err := CreateEFIImage(tempUEFI, filepath.Join(tempISO, "boot", "uefi.img"), fs); err != nil {
 			return err
 		}

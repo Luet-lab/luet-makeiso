@@ -3,17 +3,11 @@ package burner
 import (
 	"fmt"
 	"os"
+	"strings"
 
-	diskfs "github.com/diskfs/go-diskfs"
-	"github.com/diskfs/go-diskfs/disk"
-	"github.com/diskfs/go-diskfs/filesystem"
-	"github.com/diskfs/go-diskfs/filesystem/iso9660"
-
-	//	"github.com/diskfs/go-diskfs/partition/mbr"
 	"github.com/mudler/luet-makeiso/pkg/schema"
 	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
 
@@ -21,101 +15,43 @@ func GenISO(s *schema.SystemSpec, source string, f vfs.FS) error {
 
 	diskImage := s.ISOName()
 	label := s.Label
+	var bootloader_args string
 
-	if os.Getenv(("XORRISO_NATIVE")) == "true" {
-		return nativeGenISO(s, source, f)
+	// Detect syslinux usage. Probably a new flag for that in schema
+	// would be better but for backward compatibility we need some sort
+	// of automatic detection.
+	if strings.Contains(s.BootFile, "isolinux") {
+		bootloader_args = fmt.Sprintf(`\
+		  -boot_image isolinux bin_path="%s" \
+		  -boot_image isolinux system_area="%s/%s" \
+		  -boot_image isolinux partition_table=on \`, s.BootFile, source, s.IsoHybridMBR)
+	} else {
+		bootloader_args = fmt.Sprintf(`\
+		  -boot_image grub bin_path="%s" \
+		  -boot_image grub grub2_mbr="%s/%s" \
+		  -boot_image grub grub2_boot_info=on`, s.BootFile, source, s.IsoHybridMBR)
 	}
 
 	if err := run(fmt.Sprintf(
-		`xorriso -as mkisofs \
-		    -volid "%s" \
-		    -isohybrid-mbr %s/%s \
-		    -c %s \
-		    -b %s \
-		      -no-emul-boot \
-		      -boot-load-size 4 \
-		      -boot-info-table \
-		    -eltorito-alt-boot \
-		    -e boot/uefi.img \
-		      -no-emul-boot \
-		      -isohybrid-gpt-basdat \
-		    -o "%s" \
-		  %s`, label, source, s.IsoHybridMBR, s.BootCatalog, s.BootFile, diskImage, source)); err != nil {
+		`xorriso \
+		  -volid "%s" \
+		  -joliet on -padding 0 \
+		  -outdev "%s" \
+		  -map "%s" / -chmod 0755 -- %s \
+		  -boot_image any partition_offset=16 \
+		  -boot_image any cat_path="%s" \
+		  -boot_image any cat_hidden=on \
+		  -boot_image any boot_info_table=on \
+		  -boot_image any platform_id=0x00 \
+		  -boot_image any emul_type=no_emulation \
+		  -boot_image any load_size=2048 \
+		  -append_partition 2 0xef "%s/boot/uefi.img" \
+		  -boot_image any next \
+		  -boot_image any efi_path=--interval:appended_partition_2:all:: \
+		  -boot_image any platform_id=0xef \
+		  -boot_image any emul_type=no_emulation`,
+		label, diskImage, source, bootloader_args, s.BootCatalog, source)); err != nil {
 		info(err)
-		return err
-	}
-
-	checksum, err := utils.Checksum(diskImage)
-	if err != nil {
-		return errors.Wrap(err, "while calculating checksum")
-	}
-
-	return f.WriteFile(diskImage+".sha256", []byte(fmt.Sprintf("%s %s", checksum, diskImage)), os.ModePerm)
-}
-
-func nativeGenISO(s *schema.SystemSpec, source string, f vfs.FS) error {
-	diskImage := s.ISOName()
-	label := s.Label
-
-	diskImg, err := f.RawPath(diskImage)
-	if err != nil {
-		return errors.Wrapf(err, "while converting to rawpath")
-	}
-
-	if diskImg == "" {
-		log.Fatal("must have a valid path for diskImg")
-	}
-
-	diskSize, err := utils.DirSize(source)
-	if err != nil {
-		return errors.Wrapf(err, "while getting directory size")
-	}
-
-	mydisk, err := diskfs.Create(diskImg, diskSize, diskfs.Raw)
-	if err != nil {
-		return errors.Wrapf(err, "while creating disk")
-	}
-
-	// the following line is required for an ISO, which may have logical block sizes
-	// only of 2048, 4096, 8192
-	mydisk.LogicalBlocksize = 2048
-	fspec := disk.FilesystemSpec{Partition: 0, FSType: filesystem.TypeISO9660, VolumeLabel: label}
-	fs, err := mydisk.CreateFilesystem(fspec)
-	if err != nil {
-		return errors.Wrapf(err, "while creating fs")
-	}
-
-	if err := copyToFS(source, fs, f); err != nil {
-		return errors.Wrapf(err, "while copying files")
-	}
-
-	iso, ok := fs.(*iso9660.FileSystem)
-	if !ok {
-		return errors.New("not an iso filesystem")
-	}
-
-	options := iso9660.FinalizeOptions{
-		VolumeIdentifier: label,
-		ElTorito: &iso9660.ElTorito{
-			BootCatalog: s.BootCatalog,
-			Entries: []*iso9660.ElToritoEntry{
-				{
-					Platform:  iso9660.BIOS,
-					Emulation: iso9660.NoEmulation,
-					BootFile:  s.BootFile,
-					BootTable: true,
-					LoadSize:  4,
-				},
-				{
-					Platform:  iso9660.EFI,
-					Emulation: iso9660.NoEmulation,
-					//			SystemType: mbr.EFISystem,
-					BootFile: "boot/uefi.img",
-				},
-			},
-		},
-	}
-	if err := iso.Finalize(options); err != nil {
 		return err
 	}
 

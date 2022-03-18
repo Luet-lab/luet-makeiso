@@ -1,46 +1,40 @@
 package burner
 
 import (
-	diskfs "github.com/diskfs/go-diskfs"
-	diskpkg "github.com/diskfs/go-diskfs/disk"
-	"github.com/diskfs/go-diskfs/filesystem"
-	"github.com/diskfs/go-diskfs/partition/gpt"
+	"fmt"
 	"github.com/mudler/luet-makeiso/pkg/utils"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/twpayne/go-vfs"
 )
 
 func CreateEFIImage(source, diskImage string, f vfs.FS) error {
-	diskImg, err := f.RawPath(diskImage)
-	espSize, err := utils.DirSize(source)
-	var (
-		diskSize         int64 = espSize + 4*1024*1024 // 104 MB
-		blkSize          int64 = 512
-		partitionStart   int64 = 2048
-		partitionSectors int64 = espSize / blkSize
-		partitionEnd     int64 = partitionSectors - partitionStart + 1
-	)
+	align := int64(4 * 1024 * 1024)
+	diskImg, _ := f.RawPath(diskImage)
+	diskSize, _ := utils.DirSize(source)
 
-	// create a disk image
-	disk, err := diskfs.Create(diskImg, diskSize, diskfs.Raw)
+	diskF, err := f.Create(diskImg)
 	if err != nil {
-		log.Panic(err)
+		return errors.Wrapf(err, "failed creating image %s", diskImg)
 	}
-	// create a partition table
-	table := &gpt.Table{
-		Partitions: []*gpt.Partition{
-			{Start: uint64(partitionStart), End: uint64(partitionEnd), Type: gpt.EFISystemPartition, Name: "EFI System"},
-		},
+
+	// Align disk size to the next 4MB slot
+	diskSize = diskSize/align*align + align
+
+	err = diskF.Truncate(diskSize)
+	if err != nil {
+		diskF.Close()
+		return errors.Wrapf(err, "failed setting file size to %d bytes", diskSize)
 	}
-	// apply the partition table
-	err = disk.Partition(table)
+	diskF.Close()
 
-	spec := diskpkg.FilesystemSpec{Partition: 0, FSType: filesystem.TypeFat32}
-	fs, err := disk.CreateFilesystem(spec)
+	err = run(fmt.Sprintf("mkfs.fat %s", diskImg))
+	if err != nil {
+		return errors.Wrapf(err, "failed formatting %s image", diskImg)
+	}
 
-	if err := copyToFS(source, fs, f); err != nil {
-		return errors.Wrapf(err, "while copying EFI files")
+	err = run(fmt.Sprintf("mcopy -s -i %s %s/* ::", diskImg, source))
+	if err != nil {
+		return errors.Wrapf(err, "failed copying '%s' files to image '%s'", source, diskImg)
 	}
 
 	return nil

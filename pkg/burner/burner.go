@@ -89,7 +89,19 @@ func prepareRootfs(s *schema.SystemSpec, fs vfs.FS, tempOverlayfs string) error 
 				return err
 			}
 		}
+
+		if s.EnsureCommonDirs {
+			info(":steaming_bowl: Ensure commons dirs.")
+			ensureDirs(tempOverlayfs)
+		}
+
 	} else if len(s.Packages.Rootfs) > 0 {
+
+		if s.EnsureCommonDirs {
+			info(":steaming_bowl: Ensure commons dirs.")
+			ensureDirs(tempOverlayfs)
+		}
+
 		info(":steaming_bowl: Installing luet packages")
 		if err := LuetInstall(tempOverlayfs, s.Packages.Rootfs, s.Repository.Packages, s.Packages.KeepLuetDB, fs, s); err != nil {
 			return err
@@ -103,9 +115,6 @@ func prepareRootfs(s *schema.SystemSpec, fs vfs.FS, tempOverlayfs string) error 
 		}
 	}
 
-	if s.EnsureCommonDirs {
-		ensureDirs(tempOverlayfs)
-	}
 	return nil
 }
 
@@ -206,7 +215,7 @@ func prepareISO(s *schema.SystemSpec, fs vfs.FS, tempISO, tempOverlayfs, kernelF
 	return nil
 }
 
-func Burn(s *schema.SystemSpec, fs vfs.FS) error {
+func Burn(s *schema.SystemSpec, fs vfs.FS, cleanStagingDirs bool) error {
 
 	if s.RootfsImage == "" && len(s.Packages.Rootfs) == 0 && len(s.Overlay.Rootfs) == 0 {
 		return errors.New("No container image, packages or overlay specified in the yaml file")
@@ -216,7 +225,9 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(dir)
+	if cleanStagingDirs {
+		defer os.RemoveAll(dir)
+	}
 
 	if s.Arch == "" {
 		s.Arch = "x86_64"
@@ -227,10 +238,12 @@ func Burn(s *schema.SystemSpec, fs vfs.FS) error {
 	tempUEFI := filepath.Join(dir, "tempUEFI")
 	tempISO := filepath.Join(dir, "tempISO")
 
-	defer fs.RemoveAll(tempRootfs)
-	defer fs.RemoveAll(tempOverlayfs)
-	defer fs.RemoveAll(tempUEFI)
-	defer fs.RemoveAll(tempISO)
+	if cleanStagingDirs {
+		defer fs.RemoveAll(tempRootfs)
+		defer fs.RemoveAll(tempOverlayfs)
+		defer fs.RemoveAll(tempUEFI)
+		defer fs.RemoveAll(tempISO)
+	}
 
 	info(":mag: Preparing folders")
 	if err := prepareWorkDir(fs, tempRootfs, tempOverlayfs, tempUEFI, tempISO); err != nil {
